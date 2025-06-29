@@ -17,6 +17,7 @@
 #![allow(asm_sub_register)]
 #![deny(missing_docs)]
 #![no_std]
+#![feature(abi_riscv_interrupt)]
 
 use core::arch::global_asm;
 
@@ -24,6 +25,8 @@ pub mod delay;
 pub mod gpio;
 #[cfg(esp32c6)]
 pub mod i2c;
+#[cfg(esp32c6)]
+pub mod interrupt;
 #[cfg(esp32c6)]
 pub mod uart;
 
@@ -65,9 +68,10 @@ pub fn wake_hp_core() {
 global_asm!(
     r#"
     .section    .init.vector, "ax"
-    /* This is the vector table. It is currently empty, but will be populated
-     * with exception and interrupt handlers when this is supported
-     */
+    /* This is the vector table.
+    * All interrupts are routed to ISR 30 on this core.
+    * The LP core jumps to mtvec base on exceptions, and to mtvec + 4*30 on interrups.
+    * see esp32c6 technical reference section 3.3.2 */
 
     .align  0x4, 0xff
     .global _vector_table
@@ -76,9 +80,12 @@ _vector_table:
     .option push
     .option norvc
 
-    .rept 32
-    nop
+    jal exception_handler
+    .rept 29
+        nop
     .endr
+    jal interrupt_handler
+    nop
 
     .option pop
     .size _vector_table, .-_vector_table
