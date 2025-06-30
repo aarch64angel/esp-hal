@@ -110,7 +110,7 @@ pub static mut INTERRUPT_HANDLERS: InterruptHandlers = InterruptHandlers {
 // function
 // instead of relying on an unstable feature
 #[unsafe(no_mangle)]
-extern "riscv-interrupt-m" fn interrupt_handler() {
+unsafe extern "riscv-interrupt-m" fn interrupt_handler() {
     // since there are no interrupt priority levels in the LP core
     // stealing is okay, unless the HP core is setting/clearing the LP core's
     // interrupts for some reason idk how one could make this sound
@@ -175,4 +175,4 @@ extern "riscv-interrupt-m" fn interrupt_handler() {
 }
 
 #[unsafe(no_mangle)]
-extern "riscv-interrupt-m" fn exception_handler() {}
+unsafe extern "riscv-interrupt-m" fn exception_handler() {}
