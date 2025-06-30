@@ -40,6 +40,7 @@ pub unsafe fn disable_interrupts() {
 // while esp32c6_lp / pac already has an interrupt enum, its members and their values are incorrect
 // i assume they are the interrupts for the HP core from the LP peripherals
 #[repr(u8)]
+#[derive(Default, Debug, PartialEq, Eq, Clone, Hash)]
 pub enum LpInterrupts {
     /// IO interrupt bit
     IO   = 1,
@@ -53,6 +54,7 @@ pub enum LpInterrupts {
     PMU  = 32,
 }
 /// Interrupt handlers struct
+#[derive(Default, Debug, PartialEq, Eq, Clone, Hash)]
 pub struct InterruptHandlers {
     // for some reason with io, the STATUS reg has the masked interrupts, while STATUS_INT is for
     // masking them
@@ -80,17 +82,6 @@ pub struct InterruptHandlers {
     // T.R. sec 12.8, sec 12.10.1 reg 12.50
     /// pmu interrupt handler
     pub pmu: Option<fn(R<pmu::lp_int_st::LP_INT_ST_SPEC>)>,
-}
-impl Default for InterruptHandlers {
-    fn default() -> Self {
-        InterruptHandlers {
-            io: None,
-            i2c: None,
-            uart: None,
-            rtc: None,
-            pmu: None,
-        }
-    }
 }
 
 /// Specific interrupt handlers
