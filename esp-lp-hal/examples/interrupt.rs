@@ -11,7 +11,7 @@
 
 use esp_lp_hal::{
     delay::Delay,
-    interrupt::{INTERRUPT_HANDLERS, enable_interrupts},
+    interrupt::{enable_interrupts, INTERRUPT_HANDLERS},
     pac,
     prelude::*,
 };
@@ -20,7 +20,7 @@ use panic_halt as _;
 const ADDRESS: u32 = 0x5000_2000;
 
 #[entry]
-fn main() -> ! {
+fn main(mut _gpio1: Output<1>) -> ! {
     let mut i: u32 = 0;
 
     let ptr = ADDRESS as *mut u32;

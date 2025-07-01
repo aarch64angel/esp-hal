@@ -17,7 +17,6 @@
 #![allow(asm_sub_register)]
 #![deny(missing_docs)]
 #![no_std]
-#![feature(abi_riscv_interrupt)]
 
 use core::arch::global_asm;
 
@@ -80,11 +79,11 @@ _vector_table:
     .option push
     .option norvc
 
-    jal exception_handler
+    jal _exception_handler
     .rept 29
         nop
     .endr
-    jal interrupt_handler
+    jal _interrupt_handler
     nop
 
     .option pop

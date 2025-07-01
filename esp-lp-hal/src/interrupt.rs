@@ -1,5 +1,9 @@
 //! Experimental, half baked support for interrupts on the esp32c6 LP core
 
+use core::arch::naked_asm;
+
+use riscv::register::{mcause, mtval};
+
 use crate::pac::{
     self,
     generic::raw::R,
@@ -54,7 +58,7 @@ pub enum LpInterrupts {
     PMU  = 32,
 }
 /// Interrupt handlers struct
-#[derive(Default, Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Default, Debug)]
 pub struct InterruptHandlers {
     // for some reason with io, the STATUS reg has the masked interrupts, while STATUS_INT is for
     // masking them
@@ -71,17 +75,12 @@ pub struct InterruptHandlers {
     // apparently the brownout detector interrupt also goes through RTC
     // it would probably make sense to separate it out later
     /// rtc interrupt handler
-    pub rtc: Option<
-        fn(
-            (
-                R<lp_timer::lp_int_st::LP_INT_ST_SPEC>,
-                R<lp_ana::lp_int_st::LP_INT_ST_SPEC>,
-            ),
-        ),
-    >,
+    pub rtc:
+        Option<fn(R<lp_timer::lp_int_st::LP_INT_ST_SPEC>, R<lp_ana::lp_int_st::LP_INT_ST_SPEC>)>,
     // T.R. sec 12.8, sec 12.10.1 reg 12.50
     /// pmu interrupt handler
     pub pmu: Option<fn(R<pmu::lp_int_st::LP_INT_ST_SPEC>)>,
+    // pub exception: Option<fn(riscv::register::mcause::Mcause, usize)>,
 }
 
 /// Specific interrupt handlers
@@ -101,7 +100,7 @@ pub static mut INTERRUPT_HANDLERS: InterruptHandlers = InterruptHandlers {
 // function
 // instead of relying on an unstable feature
 #[unsafe(no_mangle)]
-unsafe extern "riscv-interrupt-m" fn interrupt_handler() {
+unsafe fn interrupt_handler() {
     // since there are no interrupt priority levels in the LP core
     // stealing is okay, unless the HP core is setting/clearing the LP core's
     // interrupts for some reason idk how one could make this sound
@@ -130,7 +129,7 @@ unsafe extern "riscv-interrupt-m" fn interrupt_handler() {
             let ana = pac::LP_ANA::steal();
             if let Some(rtc_handler) = INTERRUPT_HANDLERS.rtc {
                 // again, separating the timer and bod handlers would probably make sense
-                rtc_handler((rtc.lp_int_st().read(), ana.lp_int_st().read()))
+                rtc_handler(rtc.lp_int_st().read(), ana.lp_int_st().read())
             }
             rtc.lp_int_clr().write(|w| {
                 w.main_timer().clear_bit_by_one();
@@ -166,4 +165,113 @@ unsafe extern "riscv-interrupt-m" fn interrupt_handler() {
 }
 
 #[unsafe(no_mangle)]
-unsafe extern "riscv-interrupt-m" fn exception_handler() {}
+unsafe fn exception_handler() {}
+
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+unsafe extern "C" fn _interrupt_handler() {
+    // store and load all caller saved registers
+    // basically the same instructions that as "riscv-interrupt-m" would generate
+    // except there's an extra layer of indirection
+    // i guess we could also do this inline with the handler but that seems really
+    // hacky
+    naked_asm!(
+        "   .option push
+            .option arch, +c
+
+            addi   sp, sp, -64
+            sw      ra, 60(sp)
+            sw      t0, 56(sp)
+            sw      t1, 52(sp)
+            sw      t2, 48(sp)
+            sw      a0, 44(sp)
+            sw      a1, 40(sp)
+            sw      a2, 36(sp)
+            sw      a3, 32(sp)
+            sw      a4, 28(sp)
+            sw      a5, 24(sp)
+            sw      a6, 20(sp)
+            sw      a7, 16(sp)
+            sw      t3, 12(sp)
+            sw      t4, 8(sp)
+            sw      t5, 4(sp)
+            sw      t6, 0(sp)
+            call    interrupt_handler
+            lw      ra, 60(sp)
+            lw      t0, 56(sp)
+            lw      t1, 52(sp)
+            lw      t2, 48(sp)
+            lw      a0, 44(sp)
+            lw      a1, 40(sp)
+            lw      a2, 36(sp)
+            lw      a3, 32(sp)
+            lw      a4, 28(sp)
+            lw      a5, 24(sp)
+            lw      a6, 20(sp)
+            lw      a7, 16(sp)
+            lw      t3, 12(sp)
+            lw      t4, 8(sp)
+            lw      t5, 4(sp)
+            lw      t6, 0(sp)
+            addi    sp, sp, 64
+            mret
+
+            .option pop
+
+            "
+    )
+}
+
+#[unsafe(naked)]
+#[unsafe(no_mangle)]
+unsafe extern "C" fn _exception_handler() {
+    // store and load all caller saved registers
+    // basically the same instructions that as "riscv-interrupt-m" would generate
+    // except there's an extra layer of indirection
+    // i guess we could also do this inline with the handler but that seems really
+    // hacky
+    naked_asm!(
+        "   .option push
+            .option arch, +c
+
+            addi    sp, sp, -64
+            sw      ra, 60(sp)
+            sw      t0, 56(sp)
+            sw      t1, 52(sp)
+            sw      t2, 48(sp)
+            sw      a0, 44(sp)
+            sw      a1, 40(sp)
+            sw      a2, 36(sp)
+            sw      a3, 32(sp)
+            sw      a4, 28(sp)
+            sw      a5, 24(sp)
+            sw      a6, 20(sp)
+            sw      a7, 16(sp)
+            sw      t3, 12(sp)
+            sw      t4, 8(sp)
+            sw      t5, 4(sp)
+            sw      t6, 0(sp)
+            call    exception_handler
+            lw      ra, 60(sp)
+            lw      t0, 56(sp)
+            lw      t1, 52(sp)
+            lw      t2, 48(sp)
+            lw      a0, 44(sp)
+            lw      a1, 40(sp)
+            lw      a2, 36(sp)
+            lw      a3, 32(sp)
+            lw      a4, 28(sp)
+            lw      a5, 24(sp)
+            lw      a6, 20(sp)
+            lw      a7, 16(sp)
+            lw      t3, 12(sp)
+            lw      t4, 8(sp)
+            lw      t5, 4(sp)
+            lw      t6, 0(sp)
+            addi    sp, sp, 64
+            mret
+
+            .option pop
+            "
+    )
+}
