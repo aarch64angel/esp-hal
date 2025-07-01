@@ -177,43 +177,46 @@ unsafe extern "C" fn _interrupt_handler() {
     // hacky
     naked_asm!(
         "   .option push
-            .option arch, +c
+            .option arch, +c //enables compressed instructions
 
-            addi   sp, sp, -64
-            sw      ra, 60(sp)
-            sw      t0, 56(sp)
-            sw      t1, 52(sp)
-            sw      t2, 48(sp)
-            sw      a0, 44(sp)
-            sw      a1, 40(sp)
-            sw      a2, 36(sp)
-            sw      a3, 32(sp)
-            sw      a4, 28(sp)
-            sw      a5, 24(sp)
-            sw      a6, 20(sp)
-            sw      a7, 16(sp)
-            sw      t3, 12(sp)
-            sw      t4, 8(sp)
-            sw      t5, 4(sp)
-            sw      t6, 0(sp)
+            c.addi16sp  sp, -64
+            c.swsp      ra, 60(sp)
+            c.swsp      t0, 56(sp)
+            c.swsp      t1, 52(sp)
+            c.swsp      t2, 48(sp)
+            c.swsp      a0, 44(sp)
+            c.swsp      a1, 40(sp)
+            c.swsp      a2, 36(sp)
+            c.swsp      a3, 32(sp)
+            c.swsp      a4, 28(sp)
+            c.swsp      a5, 24(sp)
+            c.swsp      a6, 20(sp)
+            c.swsp      a7, 16(sp)
+            c.swsp      t3, 12(sp)
+            c.swsp      t4, 8(sp)
+            c.swsp      t5, 4(sp)
+            c.swsp      t6, 0(sp)
+
             call    interrupt_handler
-            lw      ra, 60(sp)
-            lw      t0, 56(sp)
-            lw      t1, 52(sp)
-            lw      t2, 48(sp)
-            lw      a0, 44(sp)
-            lw      a1, 40(sp)
-            lw      a2, 36(sp)
-            lw      a3, 32(sp)
-            lw      a4, 28(sp)
-            lw      a5, 24(sp)
-            lw      a6, 20(sp)
-            lw      a7, 16(sp)
-            lw      t3, 12(sp)
-            lw      t4, 8(sp)
-            lw      t5, 4(sp)
-            lw      t6, 0(sp)
-            addi    sp, sp, 64
+
+            c.lwsp      ra, 60(sp)
+            c.lwsp      t0, 56(sp)
+            c.lwsp      t1, 52(sp)
+            c.lwsp      t2, 48(sp)
+            c.lwsp      a0, 44(sp)
+            c.lwsp      a1, 40(sp)
+            c.lwsp      a2, 36(sp)
+            c.lwsp      a3, 32(sp)
+            c.lwsp      a4, 28(sp)
+            c.lwsp      a5, 24(sp)
+            c.lwsp      a6, 20(sp)
+            c.lwsp      a7, 16(sp)
+            c.lwsp      t3, 12(sp)
+            c.lwsp      t4, 8(sp)
+            c.lwsp      t5, 4(sp)
+            c.lwsp      t6, 0(sp)
+            c.addi16sp  sp, 64
+
             mret
 
             .option pop
@@ -234,41 +237,44 @@ unsafe extern "C" fn _exception_handler() {
         "   .option push
             .option arch, +c
 
-            addi    sp, sp, -64
-            sw      ra, 60(sp)
-            sw      t0, 56(sp)
-            sw      t1, 52(sp)
-            sw      t2, 48(sp)
-            sw      a0, 44(sp)
-            sw      a1, 40(sp)
-            sw      a2, 36(sp)
-            sw      a3, 32(sp)
-            sw      a4, 28(sp)
-            sw      a5, 24(sp)
-            sw      a6, 20(sp)
-            sw      a7, 16(sp)
-            sw      t3, 12(sp)
-            sw      t4, 8(sp)
-            sw      t5, 4(sp)
-            sw      t6, 0(sp)
-            call    exception_handler
-            lw      ra, 60(sp)
-            lw      t0, 56(sp)
-            lw      t1, 52(sp)
-            lw      t2, 48(sp)
-            lw      a0, 44(sp)
-            lw      a1, 40(sp)
-            lw      a2, 36(sp)
-            lw      a3, 32(sp)
-            lw      a4, 28(sp)
-            lw      a5, 24(sp)
-            lw      a6, 20(sp)
-            lw      a7, 16(sp)
-            lw      t3, 12(sp)
-            lw      t4, 8(sp)
-            lw      t5, 4(sp)
-            lw      t6, 0(sp)
-            addi    sp, sp, 64
+            c.addi16sp  sp, -64
+            c.swsp      ra, 60(sp)
+            c.swsp      t0, 56(sp)
+            c.swsp      t1, 52(sp)
+            c.swsp      t2, 48(sp)
+            c.swsp      a0, 44(sp)
+            c.swsp      a1, 40(sp)
+            c.swsp      a2, 36(sp)
+            c.swsp      a3, 32(sp)
+            c.swsp      a4, 28(sp)
+            c.swsp      a5, 24(sp)
+            c.swsp      a6, 20(sp)
+            c.swsp      a7, 16(sp)
+            c.swsp      t3, 12(sp)
+            c.swsp      t4, 8(sp)
+            c.swsp      t5, 4(sp)
+            c.swsp      t6, 0(sp)
+
+            call    _exception_handler
+
+            c.lwsp      ra, 60(sp)
+            c.lwsp      t0, 56(sp)
+            c.lwsp      t1, 52(sp)
+            c.lwsp      t2, 48(sp)
+            c.lwsp      a0, 44(sp)
+            c.lwsp      a1, 40(sp)
+            c.lwsp      a2, 36(sp)
+            c.lwsp      a3, 32(sp)
+            c.lwsp      a4, 28(sp)
+            c.lwsp      a5, 24(sp)
+            c.lwsp      a6, 20(sp)
+            c.lwsp      a7, 16(sp)
+            c.lwsp      t3, 12(sp)
+            c.lwsp      t4, 8(sp)
+            c.lwsp      t5, 4(sp)
+            c.lwsp      t6, 0(sp)
+            c.addi16sp  sp, 64
+
             mret
 
             .option pop
