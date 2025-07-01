@@ -40,7 +40,7 @@ pub unsafe fn disable_interrupts() {
 // while esp32c6_lp / pac already has an interrupt enum, its members and their values are incorrect
 // i assume they are the interrupts for the HP core from the LP peripherals
 #[repr(u8)]
-#[derive(Default, Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum LpInterrupts {
     /// IO interrupt bit
     IO   = 1,
